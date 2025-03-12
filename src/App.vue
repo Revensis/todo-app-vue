@@ -3,41 +3,61 @@ import { defineComponent, ref, onMounted } from 'vue'
 import TaskCard from './components/tasks/TaskCard.vue'
 import ModalTask from './components/tasks/ModalTask.vue'
 import taskService from './services/taskService'
-import type { Task } from "./types/task";
+import CreateTask from "@/components/tasks/CreateTask.vue";
+import type { Task } from './types/task'
+
 
 export default defineComponent({
   name: 'App',
-  components: { TaskCard, ModalTask },
+  components: { TaskCard, ModalTask , CreateTask },
   setup() {
     const tasks = ref<Task[]>([])
-    const dialog = ref(false)
+    const createDialog = ref(false)
+    const editDialog = ref(false)
     const selectedTask = ref<Task | null>(null)
     const statusOptions = ['à faire', 'en cours', 'terminée']
 
     const fetchTasks = async () => {
       try {
         const response = await taskService.getAllTasks()
-        tasks.value = response.data
+        tasks.value = response.data as Task[]
       } catch (error) {
         console.error("Error fetching tasks:", error)
       }
     }
 
-    const openEditDialog = (task: Task) => {
-      selectedTask.value = { ...task }
-      dialog.value = true
+    const openCreateDialog = () => {
+      createDialog.value = true
+    }
+    const closeCreateDialog = () => {
+      createDialog.value = false
     }
 
-    const closeDialog = () => {
-      dialog.value = false
+    const createTask = async (taskData: Task) => {
+      try {
+        await taskService.createTask(taskData)
+        closeCreateDialog()
+        await fetchTasks()
+      } catch (error) {
+        console.error('Error creating task:', error)
+      }
+    }
+
+    const openEditDialog = (task: Task) => {
+      selectedTask.value = { ...task }
+      editDialog.value = true
+    }
+
+    const closeEditDialog = () => {
+      editDialog.value = false
       selectedTask.value = null
     }
 
     const updateTask = async (updatedTask: Task) => {
       try {
         await taskService.updateTask(updatedTask._id, updatedTask)
-        closeDialog()
-        fetchTasks()
+        closeEditDialog()
+        await fetchTasks()
       } catch (error) {
         console.error("Error updating task:", error)
       }
@@ -46,7 +66,7 @@ export default defineComponent({
     const handleDelete = async (id: string) => {
       try {
         await taskService.deleteTask(id)
-        fetchTasks()
+        await fetchTasks()
       } catch (error) {
         console.error("Error deleting task:", error)
       }
@@ -56,13 +76,18 @@ export default defineComponent({
 
     return {
       tasks,
-      dialog,
-      selectedTask,
-      statusOptions,
+      createDialog,
+      openCreateDialog,
+      closeCreateDialog,
+      createTask,
+      editDialog,
       openEditDialog,
-      closeDialog,
+      closeEditDialog,
       updateTask,
+      selectedTask,
       handleDelete,
+      statusOptions,
+
     }
   },
 })
@@ -72,31 +97,50 @@ export default defineComponent({
   <v-app>
     <v-app-bar app>
       <v-toolbar-title>Ma Todo List</v-toolbar-title>
+      <v-spacer />
+      <v-btn
+        icon
+        @click="openCreateDialog"
+      >
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
     </v-app-bar>
 
     <v-main>
       <v-container>
         <v-row>
           <v-col
-              v-for="task in tasks"
-              :key="task._id"
-              cols="12"
-              md="4"
+            v-for="task in tasks"
+            :key="task._id"
+            cols="12"
+            md="4"
           >
             <v-card @click="openEditDialog(task)">
-              <TaskCard :task="task" @delete="handleDelete" />
+              <TaskCard
+                :task="task"
+                @delete="handleDelete"
+              />
             </v-card>
           </v-col>
         </v-row>
       </v-container>
     </v-main>
+
+    <CreateTask
+      v-if="createDialog"
+      :dialog="createDialog"
+      :status-options="statusOptions"
+      @create="createTask"
+      @close="closeCreateDialog"
+    />
+
     <ModalTask
-        v-if="selectedTask"
-        :dialog="dialog"
-        :task="selectedTask"
-        :statusOptions="statusOptions"
-        @update="updateTask"
-        @close="closeDialog"
+      v-if="editDialog"
+      :dialog="editDialog"
+      :task="selectedTask"
+      :status-options="statusOptions"
+      @update="updateTask"
+      @close="closeEditDialog"
     />
   </v-app>
 </template>

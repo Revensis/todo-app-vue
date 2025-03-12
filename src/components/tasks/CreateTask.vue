@@ -1,23 +1,11 @@
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue'
-
-
-export interface Task {
-  _id: string;
-  title: string;
-  description: string;
-  status: string;
-}
+import { defineComponent, ref, computed, watch } from 'vue'
 
 export default defineComponent({
-  name: 'ModalTask',
+  name: 'CreateTask',
   props: {
     dialog: {
       type: Boolean,
-      required: true,
-    },
-    task: {
-      type: Object as () => Task | null,
       required: true,
     },
     statusOptions: {
@@ -25,25 +13,22 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ['update', 'close'],
+  emits: ['create', 'close'],
   setup(props, { emit }) {
-    const localTask = ref({ ...props.task })
     const internalDialog = ref(props.dialog)
+    const newTask = ref({
+      title: '',
+      description: '',
+      status: props.statusOptions[0] || 'à faire',
+    })
 
-    watch(
-        () => props.task,
-        (newTask) => {
-          localTask.value = { ...newTask }
-        },
-        { immediate: true }
-    )
+    const isFormValid = computed(() => {
+      return newTask.value.title.trim() !== '' && newTask.value.description.trim() !== ''
+    })
 
-    watch(
-        () => props.dialog,
-        (newVal) => {
-          internalDialog.value = newVal
-        }
-    )
+    watch(() => props.dialog, (newVal) => {
+      internalDialog.value = newVal
+    })
 
     watch(internalDialog, (val) => {
       if (!val) {
@@ -51,26 +36,22 @@ export default defineComponent({
       }
     })
 
-    const isFormValid = computed(() => {
-      return (localTask.value.title || '').trim() !== '' && (localTask.value.description || '').trim() !== ''})
-
-    const saveEdit = () => {
-      if (!isFormValid.value) return
-      emit('update', localTask.value)
+    const createTask = () => {
+      emit('create', newTask.value)
       internalDialog.value = false
     }
 
-    const cancelEdit = () => {
+    const cancel = () => {
       internalDialog.value = false
       emit('close')
     }
 
     return {
       internalDialog,
-      localTask,
+      newTask,
       isFormValid,
-      saveEdit,
-      cancelEdit,
+      createTask,
+      cancel,
     }
   },
 })
@@ -82,18 +63,20 @@ export default defineComponent({
     max-width="500"
   >
     <v-card>
-      <v-card-title>Modifier la tâche</v-card-title>
+      <v-card-title>Créer une tache</v-card-title>
       <v-card-text>
         <v-text-field
-          v-model="localTask.title"
+          v-model="newTask.title"
           label="Titre"
+          required
         />
         <v-textarea
-          v-model="localTask.description"
+          v-model="newTask.description"
           label="Description"
+          required
         />
         <v-select
-          v-model="localTask.status"
+          v-model="newTask.status"
           label="Statut"
           :items="statusOptions"
         />
@@ -102,7 +85,7 @@ export default defineComponent({
         <v-spacer />
         <v-btn
           text
-          @click="cancelEdit"
+          @click="cancel"
         >
           Annuler
         </v-btn>
@@ -110,7 +93,7 @@ export default defineComponent({
           color="primary"
           text
           :disabled="!isFormValid"
-          @click="saveEdit"
+          @click="createTask"
         >
           Sauvegarder
         </v-btn>
@@ -118,6 +101,4 @@ export default defineComponent({
     </v-card>
   </v-dialog>
 </template>
-
-
 

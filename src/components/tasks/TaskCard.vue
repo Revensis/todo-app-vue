@@ -20,14 +20,23 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card height="200" class="pa-4">
+  <v-card
+    height="200"
+    class="pa-4"
+  >
     <v-card-title>{{ task.title }}</v-card-title>
     <v-card-text>
       {{ task.description }}
       <div>Statut: <strong>{{ task.status }}</strong></div>
     </v-card-text>
     <v-card-actions>
-      <v-btn text color="primary" @click="$emit('delete', task._id)">Delete</v-btn>
+      <v-btn
+        text
+        color="primary"
+        @click.stop="$emit('delete', task._id)"
+      >
+        Supprimer
+      </v-btn>
     </v-card-actions>
   </v-card>
 </template>
