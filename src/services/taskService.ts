@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, {type AxiosResponse} from 'axios';
+import type {Task} from "@/types/task";
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:3000',
@@ -8,16 +9,16 @@ const apiClient = axios.create({
 });
 
 export default {
-  getAllTasks() {
-    return apiClient.get('/tasks');
+  getAllTasks(params: Record<string, string>) {
+    return apiClient.get('/tasks', { params });
   },
   getTask(id: string) {
     return apiClient.get(`/tasks/${id}`);
   },
-  createTask(taskData: unknown) {
+  createTask(taskData:Record<string, string>) {
     return apiClient.post('/tasks', taskData);
   },
-  updateTask(id: string, taskData: unknown) {
+  updateTask(id: string, taskData: Partial<Task>): Promise<AxiosResponse<Task>> {
     return apiClient.patch(`/tasks/${id}`, taskData);
   },
   deleteTask(id: string) {
