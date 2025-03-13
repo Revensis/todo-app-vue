@@ -8,9 +8,10 @@ L'application permet à un utilisateur de se connecter en saisissant son identif
 
 ## Installation
 
-1. Cloner le dépôt : 
+1. Clonez le dépôt : git clone: https://github.com/Revensis/todo-app-vue.git
+2. Installez les dépendances
+3. Lancez l'application en vérifiant que le serveur API tourne également
 
-git clone 
 
 
 
